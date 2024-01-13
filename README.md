@@ -1,6 +1,6 @@
 # Memory
 
-#Regole di Gioco
+# Regole di Gioco
 
 -Si hanno 3 tentativi a disposizione prima di perdere la partita;
 
