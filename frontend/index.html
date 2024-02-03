@@ -1,12 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Memory Game</title>
-	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-	<script src="memory.js"></script>
+    <title>Memory Game</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 <body>
-	<button id="reset">Reset</button>
-	<div id="board"></div>
+    <div id="board"></div>
+    <button id="reset">Reset</button>
+    <script>
+        function updateBoard(board) {
+            $('#board').empty();
+            for (var i = 0; i < board.length; i++) {
+                var card = $('<div>').addClass('card').addClass(board[i]).data('index', i);
+                $('#board').append(card);
+            }
+        }
+
+        function flipCard(index) {
+            $.post('../backend/memoryController.php', { action: 'flip', index: index }, function(board) {
+                updateBoard(board);
+            }, 'json');
+        }
+
+        function checkCards(index1, index2) {
+            $.post('../backend/memoryController.php', { action: 'check', index1: index1, index2: index2 }, function(board) {
+                updateBoard(board);
+            }, 'json');
+        }
+
+        $('#reset').click(function() {
+            $.post('../backend/memoryController.php', { action: 'reset' }, function(board) {
+                updateBoard(board);
+            }, 'json');
+        });
+
+        $(document).on('click', '.card.hidden', function() {
+            var index = $(this).data('index');
+            flipCard(index);
+        });
+
+        $(document).on('click', '.card.visible', function() {
+            var index1 = $('.card.visible').first().data('index');
+            var index2 = $(this).data('index');
+            checkCards(index1, index2);
+        });
+
+        $.get('../backend/memoryController.php', function(board) {
+            updateBoard(board);
+        }, 'json');
+    </script>
 </body>
 </html>
