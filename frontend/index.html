@@ -2,52 +2,190 @@
 <html>
 <head>
     <title>Memory Game</title>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        body {
+			font-family: Arial, sans-serif;
+			background-color: #f4f4f4;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			height: 100vh;
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		.card {
+			width: 100px;
+			height: 100px;
+			background-color: #ccc;
+			display: inline-block; /* This allows the cards to sit side by side */
+			margin: 10px;
+			border-radius: 10px;
+			font-size: 2em;
+			cursor: pointer;
+			transition: background-color 0.5s ease, transform 0.5s ease;
+			box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+		}
+
+		.card:hover {
+			transform: scale(1.05);
+		}
+
+		.hidden {
+			background-color: #607d8b;
+			color: #607d8b;
+		}
+
+		.visible {
+			background-color: #8bc34a;
+			color: white;
+		}
+
+		h1 {
+		font-size: 2.5em;
+		color: #3f51b5;
+		text-align: center;
+	}
+
+	button {
+		padding: 10px 20px;
+		font-size: 1em;
+		border: none;
+		background-color: #3f51b5;
+		color: white;
+		border-radius: 5px;
+		cursor: pointer;
+		transition: background-color 0.5s ease;
+	}
+
+	button:hover {
+		background-color: #303f9f;
+	}
+
+	select {
+		padding: 5px;
+		font-size: 1em;
+		border: none;
+		border-radius: 5px;
+		background-color: #f4f4f4;
+		color: #3f51b5;
+	}
+
+	option {
+		color: #3f51b5;
+	}
+
+		
+    </style>
 </head>
 <body>
+	<h1>Memory Game</h1>
     <div id="board"></div>
-    <button id="reset">Reset</button>
+    <button onclick="resetGame()">Reset Game</button>
+    <div>
+        <p id="attempts">Attempts: 0</p>
+    </div>
+    <div>
+        <label for="cardNumber">Number of cards:</label>
+        <select id="cardNumber" onchange="changeCardNumber()">
+            <option value="12">12</option>
+            <option value="16">16</option>
+            <option value="20">20</option>
+        </select>
+    </div>
+    <div>
+		<p id="message"></p>
+	</div>
     <script>
-        function updateBoard(board) {
-            $('#board').empty();
+        var board = [];
+        var flippedCards = [];
+        var attempts = 0; 
+        var attemptsElement;
+
+        document.addEventListener('DOMContentLoaded', (event) => {
+            attemptsElement = document.getElementById('attempts');
+            changeCardNumber();
+        });
+
+        function changeCardNumber() {
+            var cardNumber = document.getElementById('cardNumber').value;
+            board = [];
+            for (var i = 0; i < cardNumber / 2; i++) {
+                board.push(String.fromCharCode('A'.charCodeAt(0) + i));
+                board.push(String.fromCharCode('A'.charCodeAt(0) + i));
+            }
+            resetBoard();
+        }
+
+
+        board.sort(() => Math.random() - 0.5);
+
+        function createBoard() {
+            var boardDiv = document.getElementById('board');
+            boardDiv.innerHTML = '';
             for (var i = 0; i < board.length; i++) {
-                var card = $('<div>').addClass('card').addClass(board[i]).data('index', i);
-                $('#board').append(card);
+                var card = document.createElement('div');
+                card.className = 'card hidden';
+                card.dataset.value = board[i];
+                card.onclick = flipCard;
+                card.textContent = board[i];
+                boardDiv.appendChild(card);
             }
         }
 
-        function flipCard(index) {
-            $.post('../backend/memoryController.php', { action: 'flip', index: index }, function(board) {
-                updateBoard(board);
-            }, 'json');
+		function flipCard() {
+			if (this.classList.contains('visible') || this.classList.contains('matched')) {
+				return;
+			}
+
+			this.classList.remove('hidden');
+			this.classList.add('visible');
+			flippedCards.push(this);
+
+			if (flippedCards.length === 2) {
+				if (flippedCards[0].dataset.value !== flippedCards[1].dataset.value) {
+					setTimeout(function() {
+						flippedCards[0].classList.remove('visible');
+						flippedCards[0].classList.add('hidden');
+						flippedCards[1].classList.remove('visible');
+						flippedCards[1].classList.add('hidden');
+						flippedCards = [];
+					}, 1000);
+					attempts++;
+					attemptsElement.textContent = 'Attempts: ' + attempts;
+					if (attempts === 5) {
+						var loseWindow = window.open("", "_hai perso");
+						loseWindow.document.write("<h1>HAI PERSO RITENTA</h1></br><button onclick='window.close()'>Chiudi finestra</button>");
+						resetGame();
+					}
+				} else {
+					flippedCards[0].classList.add('matched');
+					flippedCards[1].classList.add('matched');
+					flippedCards = [];
+					if (document.getElementsByClassName('visible').length === board.length) {
+						var winWindow = window.open("", "_COMPLIMENTI HAI VINTO");
+						winWindow.document.write("<h1>COMPLIMENTI HAI VINTO</h1></br><button onclick='window.close()'>Chiudi finestra</button>");
+						resetGame();
+					}
+				}
+			}
+		}
+
+		function resetGame() {
+            document.getElementById('message').textContent = '';
+            changeCardNumber();
         }
 
-        function checkCards(index1, index2) {
-            $.post('../backend/memoryController.php', { action: 'check', index1: index1, index2: index2 }, function(board) {
-                updateBoard(board);
-            }, 'json');
-        }
+		function resetBoard() {
+			board.sort(() => Math.random() - 0.5);
+			createBoard();
+			attempts = 0;
+			attemptsElement.textContent = 'Attempts: ' + attempts;
+		}
 
-        $('#reset').click(function() {
-            $.post('../backend/memoryController.php', { action: 'reset' }, function(board) {
-                updateBoard(board);
-            }, 'json');
-        });
-
-        $(document).on('click', '.card.hidden', function() {
-            var index = $(this).data('index');
-            flipCard(index);
-        });
-
-        $(document).on('click', '.card.visible', function() {
-            var index1 = $('.card.visible').first().data('index');
-            var index2 = $(this).data('index');
-            checkCards(index1, index2);
-        });
-
-        $.get('../backend/memoryController.php', function(board) {
-            updateBoard(board);
-        }, 'json');
+        createBoard();
     </script>
 </body>
 </html>
