@@ -2,7 +2,7 @@
 
 # Regole di Gioco
 
--Si hanno 3 tentativi a disposizione prima di perdere la partita;
+-Si hanno 5 tentativi a disposizione prima di perdere la partita;
 
 -Scegli due carte in modo randomico per cercare di trovare una coppia uguale;
 
